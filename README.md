@@ -1,4 +1,4 @@
-This is the official repo of Operating System laboratory solutions and tests. For the session, another link will be provided with a dumbed down explaination of the courses and some examples of solutions
+This is the official repo of Operating System laboratory solutions and tests. For the session, another link will be provided with a dumbed down explaination of the courses and some examples of test questions
 
 (IMPORTANT)
 
