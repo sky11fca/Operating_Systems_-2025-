@@ -23,7 +23,7 @@ then
 	exit 1
 fi
 
-IFS=$'\n' #IFS: internal field separator, apparently, Should iterate through file list normaly even though end with newline
+IFS=$'\n' #IFS: internal field separator, Should iterate through file list normaly even though end with newline
 
 for entry in $files_list
 do 

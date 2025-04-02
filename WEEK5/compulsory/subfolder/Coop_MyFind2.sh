@@ -21,8 +21,8 @@ function process_file(){
 		echo "$sha_sum -> $file"
 		((bash_script_counter++))
 	else 
-		#newline_counter=$(grep -c $ "$file" || echo 0) #this one with grep only counts how many instances of newline character are
-		newline_counter=$(wc -l "$file" | cut -d " " -f1 || echo 0) #this epipeline of command only reads the number of lines the file has
+		newline_counter=$(grep -c $ "$file" || echo 0) #this one with grep only counts how many instances of newline character are
+		#newline_counter=$(wc -l "$file" | cut -d " " -f1 || echo 0) #this pipeline of command only reads the number of lines the file has
 		echo "$file $newline_counter" >&2 
 	fi
 }

@@ -30,14 +30,42 @@ void emulate_head_char(int fd, int n)
     printf("\n");
 }
 
+int compute_file_size(int fd)
+{
+    int size = 0;
+    char buffer;
+
+    while(read(fd, &buffer, 1) > 0)
+    {
+        size++;
+    }
+    lseek(fd, 0, SEEK_SET);
+    return size;
+}
+
+int compute_nr_of_lines(int fd)
+{
+    int lines = 1;
+    char buffer;
+
+    while(read(fd, &buffer, 1) > 0)
+    {
+        if(buffer == '\n') lines++;
+    }
+    lseek(fd, 0, SEEK_SET);
+    return lines;
+}
+
 
 
 int main(int argc, char* argv[])
 {
     if (argc == 4)
     {
+        int maxsize = 0;
+        int maxline = 0;
         char* option = argv[1];
-        int n = atoi(argv[2]);
+        char* numbers = argv[2];
         int fd = open(argv[3], O_RDONLY, 0644);
 
         if(fd==-1)
@@ -48,11 +76,23 @@ int main(int argc, char* argv[])
 
         if(strncmp(option, "-n", 2)==0)
         {
-            emulate_head(fd, n);
+            if(numbers[0] == '-')
+            {
+                maxline = compute_nr_of_lines(fd) - atoi(numbers+1);
+            }
+            else maxline = atoi(numbers);
+           
+            emulate_head(fd, maxline);
         }
         else if(strncmp(option, "-c", 2)==0)
         {
-            emulate_head_char(fd, n);
+            if(numbers[0] =='-')
+            {
+                maxsize = compute_file_size(fd) - atoi(numbers+1);
+            }
+            else maxsize = atoi(numbers);
+        
+            emulate_head_char(fd, maxsize);
         }
         else
         {
