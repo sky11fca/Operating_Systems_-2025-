@@ -23,9 +23,9 @@ then
 	exit 1
 fi
 
-IFS=$'\n' #IFS: internal field separator, apparently, when parsing through the list of files given by find command, it cannot normally parse each entry because of the newline character
+IFS=$'\n' #IFS: internal field separator, apparently, Should iterate through file list normaly even though end with newline
 
-for entry in $files_list 
+for entry in $files_list
 do 
 	if [ -z "$entry" ]
 	then 

@@ -11,7 +11,7 @@ dir="$1"
 bash_script_counter=0
 
 function process_file(){
-	local file="$1"
+	file="$1"
 
 	file_type=$(file -b "$file")
 
@@ -21,14 +21,15 @@ function process_file(){
 		echo "$sha_sum -> $file"
 		((bash_script_counter++))
 	else 
-		newline_counter=$(grep -c $ "$file" || echo 0)
+		#newline_counter=$(grep -c $ "$file" || echo 0) #this one with grep only counts how many instances of newline character are
+		newline_counter=$(wc -l "$file" | cut -d " " -f1 || echo 0) #this epipeline of command only reads the number of lines the file has
 		echo "$file $newline_counter" >&2 
 	fi
 }
 
 
 function traverse(){
-	local current_dir="$1"
+	current_dir="$1"
 
 	for item in "$current_dir"/*
 	do 
