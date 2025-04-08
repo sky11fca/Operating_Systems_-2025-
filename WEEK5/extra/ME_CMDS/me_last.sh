@@ -1,19 +1,27 @@
 #! /bin/sh
 
-if [ $# -ne 1 ];
+set -x
+
+CURRENT_MONTH=$(date +"%b")
+CURRENT_YEAR=$(date +"%Y")
+
+read -p "Insert username: " username
+
+id "$username"
+exit_code=$#
+
+if [ $exit_code -ne 0 ];
 then 
-    read -p "Insert an username: " user
-else
-    user="$1"
-fi
+    echo "ERROR: $username doesn't exist"
+fi 
+
+logins=$(last -F $username | grep "$CURRENT_MONTH" | grep $CURRENT_YEAR | head -n 3)
 
 
-useless_buffer="$(last $user)"
-exit_code=$?
-
-if [ $exit_code -eq 0 ];
+if [[ -z "$logins" ]];
 then 
-    last $user -3
-else
-    echo "user: $user never connected to the server"
+    echo "The user $username never connected"
+else 
+    echo "The last 3 connections of user $username in this month: "
+    echo $logins
 fi 
