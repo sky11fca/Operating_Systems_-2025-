@@ -17,93 +17,99 @@ void process_operation(int fd, int code, float stock)
 {
     Produce p;
     int found = 0;
+    ssize_t bytes_read;
     off_t pos = 0;
     struct flock lock;
 
 
-    while(1)
+    while((bytes_read = read(fd, &p, sizeof(Produce))))
     {
-        lock.l_type = F_RDLCK;
-        lock.l_whence = SEEK_CUR;
-        lock.l_start = pos;
-        lock.l_len = sizeof(Produce);
-
-        fcntl(fd, F_SETLKW, &lock);
-
-        if(read(fd, &p, sizeof(Produce)) != sizeof(Produce))
+        if(bytes_read!=sizeof(Produce))
         {
-            lock.l_type = F_UNLCK;
-            fcntl(fd, F_SETLKW, &lock);
+            perror("READ");
+            exit(1);
+        }
+
+        if(p.code==code)
+        {
+            found = 1;
             break;
         }
 
-
-        if(p.code == code)
-        {
-            found=1;
-            lock.l_type = F_UNLCK;
-            fcntl(fd, F_SETLK, &lock);
-            break;
-        }
-
-        lock.l_type = F_UNLCK;
-        fcntl(fd, F_SETLKW, &lock);
         pos+=sizeof(Produce);
     }
 
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = pos;
+    lock.l_len = sizeof(Produce);
+    lock.l_pid = getpid();
+
     if(found)
     {
+        if(fcntl(fd, F_SETLKW, &lock)==-1)
+        {
+            perror("FCNTL");
+            exit(1);
+        }
 
-        lock.l_type = F_RDLCK;
-        lock.l_whence = SEEK_CUR;
-        lock.l_start = pos;
-        lock.l_len = sizeof(Produce);
-
-        fcntl(fd, F_SETLKW, &lock);
 
         lseek(fd, pos, SEEK_SET);
-        read(fd, &p, sizeof(Produce));
+        if(read(fd, &p, sizeof(Produce)) != sizeof(Produce))
+        {
+            perror("REREAD");
+            exit(1);
+        }
 
-        if(stock<0 && p.stock < -stock)
+        if(stock < 0 && p.stock + stock < 0)
         {
             printf("[PID %d] ERROR: Insuficient stock for product with id %d (Current: %.2f, given quant: %.2f)\n", getpid(), code, p.stock, -stock);
-            lock.l_type = F_UNLCK;
+            lock.l_type=F_UNLCK;
             fcntl(fd, F_SETLK, &lock);
+            
             return;
         }
 
         p.stock += stock;
         lseek(fd, pos, SEEK_SET);
-        write(fd, &p, sizeof(Produce));
-
-        lock.l_type = F_UNLCK;
-        fcntl(fd, F_SETLK, &lock);
+        if(write(fd, &p, sizeof(Produce))!= sizeof(Produce))
+        {
+            perror("ERROR WRITING");
+            exit(1);
+        }
+        
         printf("[PIS %d] Updated product %d: New Stock: %.2f\n", getpid(), code, p.stock);
-    }
-    else if(stock > 0)
-    {
-        p.code = code;
-        p.stock = stock;
-
-        lock.l_type = F_RDLCK;
-        lock.l_whence = SEEK_CUR;
-        lock.l_start = pos;
-        lock.l_len = sizeof(Produce);
-        fcntl(fd, F_SETLKW, &lock);
-
-
-        lseek(fd, 0, SEEK_END);
-        write(fd, &p, sizeof(Produce));
-
-        lock.l_type = F_UNLCK;
+    
+        lock.l_type=F_UNLCK;
         fcntl(fd, F_SETLK, &lock);
+    }
+    else
+    {
+        if(stock < 0)
+        {
+            printf("[OID %d] ERROR: Product %d not found, cannot be sold\n", getpid(), code);
+            exit(1);
+        }
+
+        lock.l_start = pos;
+        if (fcntl(fd, F_SETLKW, &lock) == -1) 
+        {
+            perror("Error locking for new record");
+            exit(EXIT_FAILURE);
+        }
+
+        p.code=code;
+        p.stock=stock;
+        lseek(fd, 0, SEEK_END);
+        if(write(fd, &p, sizeof(Produce))!=sizeof(Produce))
+        {
+            perror("ERROR ADDING PRODUCT");
+            exit(1);
+        }
 
         printf("[PID %d] Added product %d with stock %.2f\n", getpid(), code, stock);
-    }
-    else 
-    {
-        printf("[PID %d]ERROR: Product %d doesn't exist and cannot be sold\n", getpid(),code);
-        exit(1);
+        lock.l_type = F_UNLCK;
+        fcntl(fd, F_SETLK, &lock);
     }
 }
 
@@ -132,13 +138,13 @@ int main(int argc, char*argv[])
 
     int code;
     char op;
-    float stock;
+    float quantity;
 
-    while(fscanf(instr, "%d %c%f", &code, &op, &stock)==3)
+    while(fscanf(instr, "%d %c%f", &code, &op, &quantity)==3)
     {
         if(op=='-')
         {
-            stock=-stock;
+            quantity=-quantity;
         }
         else if(op!='+')
         {
@@ -146,8 +152,8 @@ int main(int argc, char*argv[])
             continue;
         }
 
-        process_operation(fd, code, stock);
-        sleep(5);
+        process_operation(fd, code, quantity);
+        sleep(3);
     }
 
     fclose(instr);

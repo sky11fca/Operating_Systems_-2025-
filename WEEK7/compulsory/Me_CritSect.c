@@ -1,29 +1,3 @@
-/*
-the crit sect problem: 
-Given multiple porcesses, a binary text with a database to store products. in store we have pairs of form code, stocks
-where
-code: unique identifier:int 
-stock: float
-
-MUST BE PRESENTED BINARY
-
-On the db we perform the following updating actions
-
-Write the program in C that evaluates these operations of buy sell stocks in a db
-at a specific interval. The given commands are stored in a txt file that have the following format
-
-code +stock or code -stock
-with + and - being add or remove stock respectively
-
-The actions are performed if the stock doesn't go negative
-If there is no product registered and operation is -stock will error out else will append the new product
-
-
-
-It doesn't say you need to use POSIX IO operations only "YIPPIE"
-
-*/
-
 //this is the no lock variant (UNSAFE)
 
 #include <stdio.h>
@@ -42,12 +16,19 @@ typedef struct{
 void process_operation(int fd, int code, float stock)
 {
     Produce p;
+    ssize_t bytes_read;
     int found = 0;
     off_t pos = 0;
 
 
-    while(read(fd, &p, sizeof(Produce)) == sizeof(Produce))
+    while((bytes_read = read(fd, &p, sizeof(Produce))))
     {
+        if(bytes_read!=sizeof(Produce))
+        {
+            perror("READ");
+            exit(1);
+        }
+
         if(p.code==code)
         {
             found = 1;
@@ -59,7 +40,7 @@ void process_operation(int fd, int code, float stock)
 
     if(found)
     {
-        if(stock<0 && p.stock < -stock)
+        if(stock < 0 && p.stock + stock < 0)
         {
             printf("[PID %d] ERROR: Insuficient stock for product with id %d (Current: %.2f, given quant: %.2f)\n", getpid(), code, p.stock, -stock);
             return;
@@ -67,21 +48,32 @@ void process_operation(int fd, int code, float stock)
 
         p.stock += stock;
         lseek(fd, pos, SEEK_SET);
-        write(fd, &p, sizeof(Produce));
+        if(write(fd, &p, sizeof(Produce))!= sizeof(Produce))
+        {
+            perror("ERROR WRITING");
+            exit(1);
+        }
+        
         printf("[PIS %d] Updated product %d: New Stock: %.2f\n", getpid(), code, p.stock);
     }
-    else if(stock > 0)
+    else
     {
-        p.code = code;
-        p.stock = stock;
+        if(stock < 0)
+        {
+            printf("[OID %d] ERROR: Product %d not found, cannot be sold\n", getpid(), code);
+            exit(1);
+        }
+
+        p.code=code;
+        p.stock=stock;
         lseek(fd, 0, SEEK_END);
-        write(fd, &p, sizeof(Produce));
+        if(write(fd, &p, sizeof(Produce))!=sizeof(Produce))
+        {
+            perror("ERROR ADDING PRODUCT");
+            exit(1);
+        }
+
         printf("[PID %d] Added product %d with stock %.2f\n", getpid(), code, stock);
-    }
-    else 
-    {
-        printf("[PID %d]ERROR: Product %d doesn't exist and cannot be sold\n", getpid(),code);
-        exit(1);
     }
 }
 
@@ -110,13 +102,13 @@ int main(int argc, char*argv[])
 
     int code;
     char op;
-    float stock;
+    float quantity;
 
-    while(fscanf(instr, "%d %c%f", &code, &op, &stock)==3)
+    while(fscanf(instr, "%d %c%f", &code, &op, &quantity)==3)
     {
         if(op=='-')
         {
-            stock=-stock;
+            quantity=-quantity;
         }
         else if(op!='+')
         {
@@ -124,8 +116,8 @@ int main(int argc, char*argv[])
             continue;
         }
 
-        process_operation(fd, code, stock);
-        sleep(5);
+        process_operation(fd, code, quantity);
+        sleep(3);
     }
 
     fclose(instr);

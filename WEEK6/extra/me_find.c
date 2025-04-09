@@ -6,8 +6,6 @@
 #include <pwd.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <errno.h>
-
 #define PATH_LEN 4096
 
 void search_file(const char* filename, const char* path)
