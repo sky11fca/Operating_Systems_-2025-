@@ -1,0 +1,127 @@
+BY MR. BOGDANOVICH
+
+
+TIPS AND TRICKS REGARDING OS EXAMS:
+
+SIMPLE BASH COMMANDS:
+
+- IMPORTANT FILES DIRECTORIES:
+	- /etc/passwd 
+	- /etc/groups 
+	- $HOME 
+	- . (Current directory)
+	- .. (Parrent Directory)
+- PATH TYPES:
+	- Absolute: The full path 
+	- Relative: Shorten
+- Wildcards (Regex Stuff)
+	- ?: Random character
+	- *: Random Strings of Characters
+	- []: A pattern of multiple distinct or ascending order of characters 
+	- [^...]: Patterns not containing the ones from brackets 
+	- [1,2,3]: Only ones with 1, 2, 3 
+	- [0-9]: Only ones with numbers from 0-9
+	- [^a-z]: Ones that do not have letters from a-z 
+	- ^: Must begin with...
+	- $(cmd): Value of the output of certain command 
+- FILE PERMISSIONS:
+	-REPRESENTATIONS
+		-HUMAN READABLE: -rwxrwxrwx
+		- Where the first trio is owner's rights, the second the group the owner belongs rights and the last other people rights 
+		- Where r means read permission, w is write and x is execute 
+		-OCTAL: 0777
+		- Where first is important byte I have no Idea what that means (Is never specified further in the next OS lessons)
+		- The last are the owner, group and other permissions where:
+			-x=1
+			-w=2
+			-r=4
+		- 0644: owner has read and write(because 2+4=6) acces and everybody else has read acces
+
+COMPLEX BASH COMMANDS:
+
+- COMMAND COMPOSITION:
+	- ;: Sequential flow 
+	- |: Parralel flow (PIPELINES: The output of the first command is the input of the second one)
+	- &: Still Parallel(Commands execute in the background)
+	- ||: Second command executes if the first one fails
+	- &&: Second command executes if the first one succeeds
+- IO FILE REDIRECTION
+	- <: STDIN
+	- >, >>: STDOUT (>: override, >>: Append)
+	- 2>, 2>>: STDERR (2>: override, 2>>: Append)
+
+
+
+BASH SCRIPTING:
+- SPECIAL BASH VARIABLES:
+	-$#: Number of total arguments (without the program name)
+	-$1, $2, ...: The elements of the arguments 
+	-$0: The name of the script 
+	-$@: The entire list of arguments (AS ARRAY)
+	-$*: The entire list of arguments (NON ARRAY)
+	-$?: Exit code (0 if succeed)
+	-$!: The current process PID 
+	-$$: The current shell PID 
+	-$-: The set of options of this current shell 
+!!! If you want to debug a bash script add this line: set -x !!!
+
+- LOGICAL OPERATIONS WITH FILES:
+	-z: Is null
+	-r: Is readable 
+	-w: Is writable
+	-x: Is executable
+	-f: Is normal file 
+	-d: Is directory 
+- OTHER STUFF:
+	-(), {}, ``: To store command output as variable 
+	-(()): Perform arithmetic operations (other methos is let command)
+	-[]: The if statement testing (other method is the test command)
+
+-How to declare function
+
+function_name() {...}
+function function_name {...}
+function function_name() {...}
+
+
+-SIMPLE TUTORIAL: ITERATE THROUGH ALL FILES IN A DIRECTORY:
+
+for entry in "$(specified_path)"/*
+do 
+	...
+done
+
+
+POSIX API and STDLIB IO FILES WORKINGS
+
+- IMPORTANT LIBRARIES:
+	-stdio.h 
+	-stdlib.h 
+	-unistd.h 
+	-sys/stat.h 
+	-fcntl.h 
+	-dirent.h 
+	-errno.h 
+	-
+- SIMPLE TUTORIAL: WORK WITH FILES:
+
+-Initialize an file descriptor:
+-use read to iterate through fd 
+-perform said operation 
+-WHEN DONE WITH FILE OPERATIONS ALWAYS CLOSE THE FILE DESCRIPTOR 
+
+= WORK WITH DIRECTORIES:
+-Initialize a directory descriptor WITH DIR* (OPENDIR)
+-declare a dirent variable 
+-For each entry stored in dirent variable 
+-Perform desired operations with the directory entry of name d_name
+-Close the directory descriptor 
+
+!!! TO AVOID LOOPING THROUGH DIRECTORIES, RECURSIVELY, INDEFINETLY. ADD A CONDITION THE NAME OF THE ENTRY ARE NOT . AND .. DIRECTORIES. !!!
+
+- WHEN WORKING WITH FILES, OPEN, CLOSE, READ, WRITE: ALWAYS CREATE A CONDITION IF SOMETHING GOES WRONG
+
+- LSEEK SHENANIGHENS
+	-To reset the pointer to the fd: lseek(fd, 0, SEEK_SET)
+	-To position the pointer to a specified place: lseek(fd, computed_position, SEEK_SET)
+	-To reach the end of the file: lseek(fd, 0, SEEK_END) (ALSO BY ADDING AN OFF_T VARIABLE EQUALS WITH THIS FUNCTION CALL, WILL RETURN THE TOTAL FILE SIZE)
