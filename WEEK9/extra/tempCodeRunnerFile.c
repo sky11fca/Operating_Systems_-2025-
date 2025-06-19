@@ -1,0 +1,1 @@
+volatile sig_atomic_t

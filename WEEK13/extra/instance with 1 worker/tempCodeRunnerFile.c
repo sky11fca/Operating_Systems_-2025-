@@ -1,0 +1,1 @@
+#define FIFO_CHANNEL "socket"
