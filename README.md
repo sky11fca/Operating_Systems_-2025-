@@ -6,8 +6,6 @@
 As of 19th of June 2025, this project is now <strong>ARCHIVED</strong>. In case the course was modified in any way shape or form, is no longer my business.
 WHY?
 
-
-<hr>
 # I PASSED THE OPERATING SYSTEMS COURSE!!!!
 
 
